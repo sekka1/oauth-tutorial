@@ -1,0 +1,18 @@
+---
+namespace: dev-k8sbot
+
+image:
+  tag: dev
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 512Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+ingress:
+  annotations:
+    kubernetes.io/ingress.class: kong-dev-k8sbot
+  host: api.dev.managedkube.com

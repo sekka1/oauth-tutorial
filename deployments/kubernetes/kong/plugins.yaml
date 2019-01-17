@@ -1,0 +1,28 @@
+# Plugin Doc: https://github.com/Kong/kubernetes-ingress-controller/blob/master/docs/custom-resources.md#kongplugin
+
+# Rate limit doc: https://docs.konghq.com/hub/kong-inc/rate-limiting/
+---
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: rate-limiting
+  namespace: dev-kong
+config:
+  limit_by: ip
+  second: 10000
+disabled: false
+plugin: rate-limiting
+
+---
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+ name: key-auth
+ namespace: dev-kong
+ labels:
+   global: "true" # optional, please note the quotes around true
+                 # configures the plugin Globally in Kong
+disabled: false
+config:
+  key_names: Apikey
+plugin: key-auth

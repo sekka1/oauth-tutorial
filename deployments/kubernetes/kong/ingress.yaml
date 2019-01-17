@@ -1,0 +1,8 @@
+---
+apiVersion: configuration.konghq.com/v1
+kind: KongIngress
+metadata:
+  name: slack-oauth-ingress-cert-manager
+route:
+  preserve_host: true
+  strip_path: false

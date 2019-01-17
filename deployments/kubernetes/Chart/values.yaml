@@ -90,7 +90,7 @@ ingress:
   enabled: true
   annotations:
     kubernetes.io/ingress.class: kong-k8sbot
-    kubernetes.io/tls-acme: "false"
+    #kubernetes.io/tls-acme: "false"
     rate-limiting.plugin.konghq.com: rate-limiting, key-auth
   labels: {}
   host: api.xxx-evn--xxx.managedkube.com

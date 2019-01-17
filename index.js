@@ -32,7 +32,7 @@ const server = app.listen(process.env.PORT || 5000, () => {
 
 
 // I am using this to store tokens quickly for this demo, but you probably want to use a real DB!
-const storage = require('node-persist'); 
+const storage = require('node-persist');
 storage.initSync();
 
 let apiUrl = 'https://slack.com/api';
@@ -120,6 +120,9 @@ app.get('/auth', function(req, res){
   request.post(apiUrl + '/oauth.access', data, function (error, response, body) {
     if (!error && response.statusCode == 200) {
 
+      console.log("New authorization:")
+      console.log(body)
+
       // Get an auth token (and store the team_id / token)
       storage.setItemSync(JSON.parse(body).team_id, JSON.parse(body).access_token);
 
@@ -153,5 +156,3 @@ app.get('/team/:id', function (req, res) {
   }
 
 });
-
-

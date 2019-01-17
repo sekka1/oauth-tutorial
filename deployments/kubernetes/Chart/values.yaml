@@ -50,15 +50,15 @@ livenessProbe: {}
  # successThreshold: 1
  # timeoutSeconds: 5
 
-volumeMounts:
-- mountPath: /var/run/secret/cloud.google.com
-  name: service-account
-
-volumes:
-- name: service-account
-  secret:
-    defaultMode: 420
-    secretName: bigquery-service-account
+# volumeMounts:
+# - mountPath: /var/run/secret/cloud.google.com
+#   name: service-account
+#
+# volumes:
+# - name: service-account
+#   secret:
+#     defaultMode: 420
+#     secretName: bigquery-service-account
 
 imagePullSecrets:
 - name: registry-secret

@@ -15,4 +15,4 @@ resources:
 ingress:
   annotations:
     kubernetes.io/ingress.class: kong-dev-k8sbot
-  host: api.dev.managedkube.com
+  host: slack-oauth.dev.managedkube.com

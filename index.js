@@ -68,11 +68,109 @@ function shutDown() {
 const MongoClient = require('mongodb').MongoClient;
 const assert = require('assert');
 // Connection URL
-const url = process.env.MONGO_DB_CONNECTION_URL || 'mongodb://localhost:27017';
+const uri = process.env.MONGO_DB_CONNECTION_URL || 'mongodb://localhost:27017';
 
 // Database Name
 const dbName = process.env.MONGO_DB_NAME || 'dev';
-const client = new MongoClient(url, {useNewUrlParser: true });
+const client = new MongoClient(uri, { useNewUrlParser: true });
+////
+
+client.connect(err => {
+  const collection = client.db("test").collection("slack");
+
+  // Insert one
+  var myobj = { name: "Company Inc", address: "Highway 37" };
+
+  collection.save(myobj, function(err, result) {
+    if (err) throw err;
+    console.log("1 document inserted for testing: a");
+  });
+
+  collection.save(myobj, function(err, result) {
+    if (err) throw err;
+    console.log("1 document inserted for testing: b");
+  });
+
+  //client.close();
+});
+
+client.connect(err => {
+  const collection = client.db("test").collection("slack");
+
+  // Insert one
+  var myobj = { name: "Company Inc", address: "Highway 37" };
+
+  collection.save(myobj, function(err, result) {
+    if (err) throw err;
+    console.log("1 document inserted for testing: a");
+  });
+
+  collection.save(myobj, function(err, result) {
+    if (err) throw err;
+    console.log("1 document inserted for testing: b");
+  });
+
+  //client.close();
+});
+
+
+// client.connect(function(err) {
+//   assert.equal(null, err);
+//   console.log("Connected successfully to server the mongodb server");
+//
+//   const db = client.db(dbName);
+//
+//   /* *******************************
+//   /* OAuth
+//   /* implement when distributing the bot
+//   /* ***************************** */
+//   app.get('/auth', function(req, res){
+//     if (!req.query.code) { // access denied
+//       console.log('Access denied');
+//       return;
+//     }
+//     var data = {form: {
+//       client_id: process.env.SLACK_CLIENT_ID,
+//       client_secret: process.env.SLACK_CLIENT_SECRET,
+//       code: req.query.code
+//     }};
+//     request.post(apiUrl + '/oauth.access', data, function (error, response, body) {
+//       if (!error && response.statusCode == 200) {
+//
+//         console.log("New authorization:")
+//         console.log(body)
+//
+//         var printError = function(error, explicit) {
+//           console.log(`[${explicit ? 'EXPLICIT' : 'INEXPLICIT'}] ${error.name}: ${error.message}`);
+//         }
+//
+//         try{
+//
+//           // Get an auth token (and store the team_id / token)
+//           storage.setItemSync(JSON.parse(body).team_id, JSON.parse(body).access_token);
+//
+//           res.sendStatus(200);
+//
+//           // Show a nicer web page or redirect to Slack, instead of just giving 200 in reality!
+//           //res.redirect(__dirname + "/public/success.html");
+//
+//           // Mongodb: Insert slack info
+//           insertDocuments(db, JSON.parse(body), function() {
+//             client.close();
+//           });
+//
+//         } catch (e) {
+//             if (e instanceof SyntaxError) {
+//                 printError(e, true);
+//             } else {
+//                 printError(e, false);
+//             }
+//         }
+//
+//       }
+//     })
+//   });
+// });
 
 /* *******************************
 /* Slash Command
@@ -174,15 +272,31 @@ app.get('/auth', function(req, res){
         //res.redirect(__dirname + "/public/success.html");
 
         // Mongodb: Insert slack info
-        client.connect(function(err) {
-          assert.equal(null, err);
-          console.log("Connected successfully to server");
+        // client.connect(function(err) {
+        //   assert.equal(null, err);
+        //   console.log("Connected successfully to server");
+        //
+        //   const db = client.db(dbName);
+        //
+        //   insertDocuments(db, JSON.parse(body), function() {
+        //     //client.close();
+        //   });
+        //
+        //   //client.close();
+        // });
 
-          const db = client.db(dbName);
 
-          insertDocuments(db, JSON.parse(body), function() {
-            client.close();
+        client.connect(err => {
+          const collection = client.db("test").collection("slack");
+
+          // Insert one
+          var insertObj = { _id: JSON.parse(body).team_id, data: JSON.parse(body) }
+
+          collection.save(insertObj, function(err, result) {
+            if (err) throw err;
+            console.log("1 document inserted for team: "+JSON.parse(body).team_id);
           });
+
         });
 
       } catch (e) {
@@ -243,6 +357,34 @@ const insertDocuments = function(db, slackJSON, callback) {
   collection.save(insertObj, function(err, result) {
     if (err) throw err;
     console.log("1 document inserted for team: "+slackJSON.team_id);
+    callback(result);
+  });
+}
+
+const insertDocuments2 = function(db, callback) {
+
+  // Get the documents collection
+  const collection = db.collection(process.env.MONGO_COLLECTION || 'slack');
+
+  // Insert some documents
+  // collection.insertMany([
+  //   {a : 1}, {a : 2}, {a : 3}
+  // ], function(err, result) {
+  //   assert.equal(err, null);
+  //   assert.equal(3, result.result.n);
+  //   assert.equal(3, result.ops.length);
+  //   console.log("Inserted 3 documents into the collection");
+  //   callback(result);
+  // });
+
+  // Insert one
+  var myobj = { name: "Company Inc", address: "Highway 37" };
+
+  //var insertObj = { _id: slackJSON.team_id, data: slackJSON }
+
+  collection.insertOne(myobj, function(err, result) {
+    if (err) throw err;
+    console.log("1 document inserted for testing");
     callback(result);
   });
 }

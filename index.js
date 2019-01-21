@@ -27,16 +27,52 @@ const server = app.listen(process.env.PORT || 5000, () => {
   console.log('Express server listening on port %d in %s mode', server.address().port, app.settings.env);
 });
 
-// Internal integration only (No OAuth)
-//const oauthToken = process.env.SLACK_AUTH_TOKEN;
-
-
 // I am using this to store tokens quickly for this demo, but you probably want to use a real DB!
 const storage = require('node-persist');
 storage.initSync();
 
 let apiUrl = 'https://slack.com/api';
 
+/* *******************************
+/* Handle SIG
+/* ***************************** */
+process.on('SIGTERM', shutDown);
+process.on('SIGINT', shutDown);
+
+let connections = [];
+
+server.on('connection', connection => {
+    connections.push(connection);
+    connection.on('close', () => connections = connections.filter(curr => curr !== connection));
+});
+
+function shutDown() {
+    console.log('Received kill signal, shutting down gracefully');
+    server.close(() => {
+        console.log('Closed out remaining connections');
+        process.exit(0);
+    });
+
+    setTimeout(() => {
+        console.error('Could not close connections in time, forcefully shutting down');
+        process.exit(1);
+    }, 10000);
+
+    connections.forEach(curr => curr.end());
+    setTimeout(() => connections.forEach(curr => curr.destroy()), 5000);
+}
+
+/* *******************************
+/* Mongo DB
+/* ***************************** */
+const MongoClient = require('mongodb').MongoClient;
+const assert = require('assert');
+// Connection URL
+const url = process.env.MONGO_DB_CONNECTION_URL || 'mongodb://localhost:27017';
+
+// Database Name
+const dbName = process.env.MONGO_DB_NAME || 'dev';
+const client = new MongoClient(url, {useNewUrlParser: true });
 
 /* *******************************
 /* Slash Command
@@ -123,20 +159,43 @@ app.get('/auth', function(req, res){
       console.log("New authorization:")
       console.log(body)
 
-      // Get an auth token (and store the team_id / token)
-      storage.setItemSync(JSON.parse(body).team_id, JSON.parse(body).access_token);
+      var printError = function(error, explicit) {
+        console.log(`[${explicit ? 'EXPLICIT' : 'INEXPLICIT'}] ${error.name}: ${error.message}`);
+      }
 
-      res.sendStatus(200);
+      try{
 
-      // Show a nicer web page or redirect to Slack, instead of just giving 200 in reality!
-      //res.redirect(__dirname + "/public/success.html");
+        // Get an auth token (and store the team_id / token)
+        storage.setItemSync(JSON.parse(body).team_id, JSON.parse(body).access_token);
+
+        res.sendStatus(200);
+
+        // Show a nicer web page or redirect to Slack, instead of just giving 200 in reality!
+        //res.redirect(__dirname + "/public/success.html");
+
+        // Mongodb: Insert slack info
+        client.connect(function(err) {
+          assert.equal(null, err);
+          console.log("Connected successfully to server");
+
+          const db = client.db(dbName);
+
+          insertDocuments(db, JSON.parse(body), function() {
+            client.close();
+          });
+        });
+
+      } catch (e) {
+          if (e instanceof SyntaxError) {
+              printError(e, true);
+          } else {
+              printError(e, false);
+          }
+      }
+
     }
   })
 });
-
-
-
-
 
 /* Extra */
 
@@ -156,3 +215,34 @@ app.get('/team/:id', function (req, res) {
   }
 
 });
+
+/* *******************************
+/* Mongo DB
+/* ***************************** */
+const insertDocuments = function(db, slackJSON, callback) {
+
+  // Get the documents collection
+  const collection = db.collection(process.env.MONGO_COLLECTION || 'slack');
+
+  // Insert some documents
+  // collection.insertMany([
+  //   {a : 1}, {a : 2}, {a : 3}
+  // ], function(err, result) {
+  //   assert.equal(err, null);
+  //   assert.equal(3, result.result.n);
+  //   assert.equal(3, result.ops.length);
+  //   console.log("Inserted 3 documents into the collection");
+  //   callback(result);
+  // });
+
+  // Insert one
+  //var myobj = { name: "Company Inc", address: "Highway 37" };
+
+  var insertObj = { _id: slackJSON.team_id, data: slackJSON }
+
+  collection.save(insertObj, function(err, result) {
+    if (err) throw err;
+    console.log("1 document inserted for team: "+slackJSON.team_id);
+    callback(result);
+  });
+}

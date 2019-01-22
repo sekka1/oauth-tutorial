@@ -228,7 +228,7 @@ app.get('/auth', function(req, res){
         client.connect(err => {
           const collection = client.db("test").collection("slack");
 
-          var insertObj = { _id: JSON.parse(body).team_id, data: JSON.parse(body) }
+          var insertObj = { _id: JSON.parse(body).team_id, teamID: JSON.parse(body).team_id, data: JSON.parse(body) }
 
           collection.save(insertObj, function(err, result) {
             if (err) throw err;
